@@ -18,7 +18,7 @@ To set up the Flask application, follow these steps:
    ```
 4. Activate the virtual environment:
    ```
-   source env/bin/activate  # On Windows use `env\Scripts\activate`
+     env\bin\activate # On MacOS use `source env/bin/activate`
    ```
 5. Install the required dependencies:
    ```
@@ -31,7 +31,7 @@ To run the application, use the following command:
 
 ```
 
-    run flask
+    python3 app.py
 
 ```
 
@@ -40,16 +40,13 @@ To run the application, use the following command:
 ### /api/predict
 This endpoint accepts POST requests with the following payload:
 
-    ```json
         {
             "latitude": 19.0728,
             "longitude": 72.8826
         }
-    ```
 
 The response will be:
 
-    ```json
         {
             "conditions": {
                 "humidity": 63.809895833333336,
@@ -62,21 +59,17 @@ The response will be:
                 "lentil (21.00%)"
             ]
         }
-    ```
 
 ### /api/forecast
 This endpoint accepts POST requests with the following payload:
 
-    ```json
         {
             "latitude": 19.0728,
             "longitude": 72.8826
         }
-    ```
 
 The response will be:
 
-    ```json
     {
     "response": {
         "humidity": 63.809895833333336,
@@ -85,4 +78,3 @@ The response will be:
         "weather_data": []
         }
     }
-    ```
