@@ -37,9 +37,10 @@ To run the application, use the following command:
 
 ## API Endpoint
 
-/predict
+### /api/predict
 This endpoint accepts POST requests with the following payload:
-    ```JSON
+
+    ```json
         {
             "latitude": 19.0728,
             "longitude": 72.8826
@@ -47,8 +48,8 @@ This endpoint accepts POST requests with the following payload:
     ```
 
 The response will be:
-    ```JSON
 
+    ```json
         {
             "conditions": {
                 "humidity": 63.809895833333336,
@@ -63,10 +64,10 @@ The response will be:
         }
     ```
 
-/forecast
+### /api/forecast
 This endpoint accepts POST requests with the following payload:
 
-    ```JSON
+    ```json
         {
             "latitude": 19.0728,
             "longitude": 72.8826
@@ -75,7 +76,7 @@ This endpoint accepts POST requests with the following payload:
 
 The response will be:
 
-    ```JSON
+    ```json
     {
     "response": {
         "humidity": 63.809895833333336,
