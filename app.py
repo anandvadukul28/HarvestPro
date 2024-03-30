@@ -17,25 +17,26 @@ url = "https://api.open-meteo.com/v1/forecast"
 
 app = Flask(__name__)
 
-@app.route('/api/forecast', methods=['POST'])
+@app.route('/api/forecast', methods=['GET'])
 def forecast():
-    # Get latitude and longitude from the request
-    latitude = request.json.get('latitude')
-    longitude = request.json.get('longitude')
+    # Get latitude and longitude from the request parameters
+    latitude = request.args.get('latitude')
+    longitude = request.args.get('longitude')
     # Get weather forecast for the given coordinates
     response = get_weather_forecast(latitude, longitude, True)
-    return jsonify(response=response, timestamp=pd.Timestamp.now().isoformat(), timeframe="hourly")
-
-@app.route('/api/predict', methods=['POST'])
+    return jsonify(response=response, timestamp=pd.Timestamp.now().isoformat(), timeframe="hourly", latitude=latitude, longitude=longitude)
+ 
+ 
+@app.route('/api/predict', methods=['GET'])
 def predict():
-    # Get latitude and longitude from the request
-    latitude = request.json.get('latitude')
-    longitude = request.json.get('longitude')
+    # Get latitude and longitude from the request parameters
+    latitude = request.args.get('latitude')
+    longitude = request.args.get('longitude')
     # Get weather conditions for the given coordinates
     conditions = get_weather_forecast(latitude, longitude)
     # Predict crops based on the weather conditions
     predicted_crops = predict_crops_for_conditions(conditions)
-    return jsonify(conditions=conditions, predicted_crops=predicted_crops)
+    return jsonify(conditions=conditions, predicted_crops=predicted_crops, latitude=latitude, longitude=longitude)
 
 def get_weather_forecast(latitude, longitude, raw=False):
     # Set parameters for the weather forecast API request
