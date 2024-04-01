@@ -17,6 +17,7 @@ url = "https://api.open-meteo.com/v1/forecast"
 
 app = Flask(__name__)
 
+
 @app.route('/api/forecast', methods=['GET'])
 def forecast():
     # Get latitude and longitude from the request parameters
@@ -25,8 +26,8 @@ def forecast():
     # Get weather forecast for the given coordinates
     response = get_weather_forecast(latitude, longitude, True)
     return jsonify(response=response, timestamp=pd.Timestamp.now().isoformat(), timeframe="hourly", latitude=latitude, longitude=longitude)
- 
- 
+
+
 @app.route('/api/predict', methods=['GET'])
 def predict():
     # Get latitude and longitude from the request parameters
@@ -37,6 +38,7 @@ def predict():
     # Predict crops based on the weather conditions
     predicted_crops = predict_crops_for_conditions(conditions)
     return jsonify(conditions=conditions, predicted_crops=predicted_crops, latitude=latitude, longitude=longitude)
+
 
 def get_weather_forecast(latitude, longitude, raw=False):
     # Set parameters for the weather forecast API request
@@ -101,12 +103,15 @@ def get_weather_forecast(latitude, longitude, raw=False):
 
     return data
 
+
 def insert_to_mongo(data):
     # Insert data into MongoDB collection
-    client = MongoClient(os.getenv('MONGO_CONNECTION_STRING', 'mongodb://localhost:27017'))
+    client = MongoClient(
+        os.getenv('MONGO_CONNECTION_STRING', 'mongodb://localhost:27017'))
     db = client['harvestpro']
     collection = db['prediction']
     collection.insert_one(data)
+
 
 def predict_crops_for_conditions(conditions):
     # Load the crop prediction model
@@ -126,6 +131,7 @@ def predict_crops_for_conditions(conditions):
             predicted_crops.append(
                 f"{model.classes_[idx]} ({probs[idx]*100:.2f}%)")
     return predicted_crops
+
 
 if __name__ == '__main__':
     # Run the Flask app in debug mode
