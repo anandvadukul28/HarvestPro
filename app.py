@@ -1,3 +1,6 @@
+import os
+import pickle
+
 from flask import Flask, jsonify, request
 from pymongo import MongoClient
 import openmeteo_requests
@@ -5,8 +8,6 @@ import numpy as np
 import requests_cache
 import pandas as pd
 from retry_requests import retry
-import pickle
-import os
 
 # Setup the Open-Meteo API client with cache and retry on error
 cache_session = requests_cache.CachedSession('.cache', expire_after=3600)
