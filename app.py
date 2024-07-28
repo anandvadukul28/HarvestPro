@@ -30,7 +30,7 @@ def forecast():
     latitude = request.args.get('latitude')
     longitude = request.args.get('longitude')
     response = get_weather_forecast(latitude, longitude, True)
-    return jsonify(response=response, timestamp=pd.Timestamp.now().isoformat(), 
+    return jsonify(response=response, timestamp=pd.Timestamp.now().isoformat(),
                    timeframe="hourly", latitude=latitude, longitude=longitude)
 
 @app.route('/api/predict', methods=['GET'])
@@ -42,7 +42,7 @@ def predict():
     longitude = request.args.get('longitude')
     conditions = get_weather_forecast(latitude, longitude)
     predicted_crops = predict_crops_for_conditions(conditions)
-    return jsonify(conditions=conditions, predicted_crops=predicted_crops, 
+    return jsonify(conditions=conditions, predicted_crops=predicted_crops,
                    latitude=latitude, longitude=longitude)
 
 def get_weather_forecast(latitude, longitude, raw=False):
@@ -71,44 +71,70 @@ def get_weather_forecast(latitude, longitude, raw=False):
     print(f"Timezone {response.Timezone()} {response.TimezoneAbbreviation()}")
     print(f"Timezone difference to GMT+0 {response.UtcOffsetSeconds()} s")
 
-    hourly = response.Hourly()
-    hourly_temperature_2m = hourly.Variables(0).ValuesAsNumpy()
-    hourly_relative_humidity_2m = hourly.Variables(1).ValuesAsNumpy()
-    hourly_rain = hourly.Variables(2).ValuesAsNumpy()
+    hourly_data = extract_hourly_data(response)
+    hourly_dataframe = pd.DataFrame(data=hourly_data)
 
-    hourly_data = {
+    print(hourly_dataframe.head())
+
+    averages = calculate_averages(hourly_dataframe)
+    print_averages(averages)
+
+    if raw:
+        data = averages
+        data['weather_data'] = hourly_dataframe.to_dict(orient='records')
+        return data
+
+    return averages
+
+def extract_hourly_data(response):
+    """
+    Extract hourly weather data from the API response.
+
+    Args:
+        response: API response object.
+
+    Returns:
+        dict: Hourly weather data.
+    """
+    hourly = response.Hourly()
+    return {
         "date": pd.date_range(
             start=pd.to_datetime(hourly.Time(), unit="s", utc=True),
             end=pd.to_datetime(hourly.TimeEnd(), unit="s", utc=True),
             freq=pd.Timedelta(seconds=hourly.Interval()),
             inclusive="left"
         ),
-        "temperature_2m": hourly_temperature_2m.tolist(),
-        "relative_humidity_2m": hourly_relative_humidity_2m.tolist(),
-        "rain": hourly_rain.tolist()
+        "temperature_2m": hourly.Variables(0).ValuesAsNumpy().tolist(),
+        "relative_humidity_2m": hourly.Variables(1).ValuesAsNumpy().tolist(),
+        "rain": hourly.Variables(2).ValuesAsNumpy().tolist()
     }
-    hourly_dataframe = pd.DataFrame(data=hourly_data)
 
-    print(hourly_dataframe.head())
+def calculate_averages(hourly_dataframe):
+    """
+    Calculate average temperature, humidity, and rainfall.
 
-    average_temperature = hourly_dataframe['temperature_2m'].mean()
-    average_relative_humidity = hourly_dataframe['relative_humidity_2m'].mean()
-    average_rain = hourly_dataframe['rain'].mean()
+    Args:
+        hourly_dataframe (pd.DataFrame): DataFrame containing hourly weather data.
 
-    print(f"Average Temperature: {average_temperature}")
-    print(f"Average Relative Humidity: {average_relative_humidity}")
-    print(f"Average Rain: {average_rain}")
-
-    data = {
-        "temperature": average_temperature,
-        "humidity": average_relative_humidity,
-        "rainfall": average_rain
+    Returns:
+        dict: Average weather conditions.
+    """
+    return {
+        "temperature": hourly_dataframe['temperature_2m'].mean(),
+        "humidity": hourly_dataframe['relative_humidity_2m'].mean(),
+        "rainfall": hourly_dataframe['rain'].mean()
     }
-    if raw:
-        data['weather_data'] = hourly_dataframe.to_dict(orient='records')
-        return data
 
-    return data
+def print_averages(averages):
+    """
+    Print the average weather conditions.
+
+    Args:
+        averages (dict): Average weather conditions.
+    """
+    print(f"Average Temperature: {averages['temperature']}")
+    print(f"Average Relative Humidity: {averages['humidity']}")
+    print(f"Average Rain: {averages['rainfall']}")
 
 def insert_to_mongo(data):
     """
@@ -135,8 +161,7 @@ def predict_crops_for_conditions(conditions):
     conditions_df = pd.DataFrame(conditions, index=[0])
     probs = model.predict_proba(conditions_df)[0]
     top_indices = np.argsort(probs)[::-1]
-    predicted_crops = [f"{model.classes_[idx]} ({probs[idx]*100:.2f}%)" for idx in top_indices[:3]]
-    return predicted_crops
+    return [f"{model.classes_[idx]} ({probs[idx]*100:.2f}%)" for idx in top_indices[:3]]
 
 if __name__ == '__main__':
     app.run(debug=True)
